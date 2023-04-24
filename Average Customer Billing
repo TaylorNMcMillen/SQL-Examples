@@ -1,0 +1,62 @@
+-- An example of finding the average billing amount per customer from 2019 to 2021 using a simple dataset
+
+-- Creating an sample dataset
+CREATE TABLE billing(
+	 customer_id VARCHAR(50),
+	 customer_name VARCHAR(50),
+	 billing_id VARCHAR(50),
+	 billing_creation_date date,
+	 billed_amount DECIMAL(18,2)
+);
+
+INSERT INTO billing VALUES 
+	("110543", "Adam Smith", "id1", '2020-10-21', 100.00),
+	("110543", "Adam Smith", "id2", '2020-11-11', 150.00),
+	("110543","Adam Smith","id3","2021-12-04",100.00),
+	("529467","Beverly Jones","id4","2019-10-17",150),
+	("529467","Beverly Jones","id5","2020-11-11",200),
+	("529467","Beverly Jones","id6","2021-12-12",250),
+	("983426","Charlie Davidson","id7","2018-03-16",100),
+	("983426","Charlie Davidson","id8","2019-05-22",250),
+	("983426","Charlie Davidson","id9","2021-06-07",300)
+
+-- Creating a view with relevant data. We want the total amount of orders per year and the total amount billed per year, grouped by each customer
+CREATE VIEW customer_billing_by_year AS
+(
+	SELECT customer_id, customer_name,
+	SUM(CASE WHEN YEAR(billing_creation_date) = '2019' 
+		THEN billed_amount 
+		ELSE 0 END) 
+	AS sum_2019, 
+	SUM(CASE WHEN YEAR(billing_creation_date) = '2020'
+		THEN billed_amount
+		ELSE 0 END) 
+	AS sum_2020,
+	SUM(CASE WHEN YEAR (billing_creation_date) = '2021'
+		THEN billed_amount 
+		ELSE 0 END) 
+	AS sum_2021,
+	COUNT(CASE WHEN YEAR(billing_creation_date) = '2019' 
+		THEN billed_amount 
+		ELSE null END) 
+	AS count_2019, 
+	COUNT(CASE WHEN YEAR(billing_creation_date) = '2020'
+		THEN billed_amount
+		ELSE null END) 
+	AS count_2020,
+	COUNT(CASE WHEN YEAR (billing_creation_date) = '2021'
+		THEN billed_amount 
+		ELSE null END) 
+	AS count_2021
+	FROM billing
+	group by customer_id, customer_name
+)
+
+-- Calculating the average for each customer. For a proper average we must include years with no orders (count value of 0). 
+-- This means the 0 values in the count columns must be changed to 1 as we add them together divide with them to find the average. 
+SELECT customer_id, 
+	customer_name,
+	(sum_2019 + sum_2020 + sum_2021) / (case when count_2019 = 0 then 1 else count_2019 end + case when count_2020 = 0 then 1 else count_2020 end + case when count_2021 = 0 then 1 else count_2021 end)
+	AS average_billed_per_year 
+FROM customer_billing_by_year
+group by customer_id, customer_name
