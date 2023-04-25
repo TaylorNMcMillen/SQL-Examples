@@ -1,6 +1,8 @@
-/* CREATE TABLE orders_archived AS
+CREATE TABLE orders_archived AS
 	SELECT *
-	FROM orders */
+	FROM orders
+	
+	
 INSERT INTO orders_archived ()
 	SELECT *
 	FROM orders
